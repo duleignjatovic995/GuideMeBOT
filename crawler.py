@@ -4,9 +4,9 @@ import bs4 as bs
 import re
 from urllib.parse import urljoin
 from nltk.stem import porter
+from gensim.summarization import summarize
 
-
-ignorewords = set(['the', 'of', 'to', 'and', 'a', 'in', 'is', 'it'])
+ignorewords = set(['the', 'of', 'to', 'and', 'a', 'in', 'is', 'it', 'for'])
 
 
 class Crawler:
@@ -56,10 +56,16 @@ class Crawler:
 
         # Get individual words
         text = self.get_text(soup)
-        words = self.separate_words(text)
+
+        # sum_text = summarize(text)
+
+        words = self.separate_words(text)  # list of stemmed words
 
         # Get URL id
         urlid = self.get_entry_id('urllist', 'url', url)
+        # self.conn.execute(
+        #     "UPDATE urllist SET pagetext='%s' WHERE rowid=%d " % (sum_text, urlid)
+        # )
 
         # Link each word to this url
         # todo make it more efficient
@@ -138,7 +144,6 @@ class Crawler:
                     print('Prosao', page)
                 except:
                     print('Usrao ga bajo hua', page)
-                    # print(traceback.format_exc(), page)
                     continue
                 soup = bs.BeautifulSoup(c.read(), 'html.parser')
                 self.add_to_index(page, soup)
@@ -152,6 +157,7 @@ class Crawler:
                             continue
                         url = url.split('#')[0]  # remove location portion
                         if url[0:4] == pattern and not self.is_indexed(url):
+                            print("add to new pages", url)
                             new_pages.add(url)
                 self.dbcommit()
             pages = new_pages
@@ -160,7 +166,7 @@ class Crawler:
         """
         Toxic method to create db schema and database tables
         """
-        self.conn.execute('CREATE TABLE urllist(url)')
+        self.conn.execute('CREATE TABLE urllist(url)')  # , pagetext VARCHAR
         self.conn.execute('CREATE TABLE wordlist(word)')
         self.conn.execute('CREATE TABLE wordlocation(urlid, wordid, location)')
         self.conn.execute('CREATE TABLE link(fromid INTEGER, toid INTEGER )')

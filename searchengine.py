@@ -2,14 +2,18 @@ import neuralnet
 import sqlite3.dbapi2 as sqlite
 from nltk.stem import porter
 import crawler
+import gensim
 
 DB = 'searchindex.db'
+RET_SIZE = 10
+default_page = 'http://www.unhcr.org/'
 
 webpages = [
-    'https://www.refugee.info/serbia/',
-    'https://www.refugee.info/serbia/services/',
+    'http://azil.rs/en/',
     'http://www.unhcr.org/non-governmental-organizations.html',
     'http://www.unhcr.org/pages/49c3646c296.html',
+    'https://www.refugee.info/serbia/',
+    'https://www.refugee.info/serbia/services/',
 ]
 
 mynet = neuralnet.SearchNet('nn.db')
@@ -69,7 +73,11 @@ class Searcher:
         # Create the query from the separate parts
         # All url's(urlid) contain every word in the query
         full_query = 'SELECT %s FROM %s WHERE %s' % (field_list, table_list, clause_list)
-        rows = self.conn.execute(full_query).fetchall()
+        rows = []
+        try:
+            rows = self.conn.execute(full_query).fetchall()
+        except Exception:
+            return 'Error', wordids
         return rows, wordids
 
     def get_scored_list(self, rows, word_ids):
@@ -85,8 +93,8 @@ class Searcher:
         # Scoring functions
         weights = [
             (1.0, self.word_frequency_score(rows)),
-            (1.0, self.location_score(rows)),
-            (1.0, self.distance_score(rows)),
+            (2.0, self.location_score(rows)),
+            (3.0, self.distance_score(rows)),
         ]
 
         for (weight, scores) in weights:
@@ -115,14 +123,18 @@ class Searcher:
         :param q: query string for search
         """
         rows, word_ids = self.get_match_rows(q)  # Get list of tuples (urlid, wordlocations...)
+        if rows == 'Error':
+            return [(-1.0, default_page)]
 
         scores = self.get_scored_list(rows, word_ids)
         # Sort urls for query
         ranked_scores = sorted([(score, url) for (url, score) in scores.items()], reverse=True)
+        # return ranked_scores[:10]
         # this
-        for (score, urlid) in ranked_scores[0:10]:
-            print('%f\t%s' % (score, self.get_url_name(urlid)))
-        return word_ids, [r[1] for r in ranked_scores[0:10]]
+        return [(score, self.get_url_name(urlid)) for (score, urlid) in ranked_scores[:RET_SIZE]]
+        # for (score, urlid) in ranked_scores[0:10]:
+        #     print('%f\t%s' % (score, self.get_url_name(urlid)))
+        # return word_ids, [r[1] for r in ranked_scores[0:10]]
 
     def normalize(self, scores, small_is_better=False):
         """
@@ -210,11 +222,20 @@ class Searcher:
         scores = dict([(urlids[i], nn_result[i]) for i in range(len(urlids))])
         return self.normalize(scores)
 
+    def topic_score(self):
+        pass
+
+    def urlname_score(self):
+        pass
+
 
 if __name__ == '__main__':
-    c = crawler.Crawler(DB)
+    # krle = crawler.Crawler('bazulja.db')
+    # krle.create_index_tables()
+    # krle.crawl(webpages)
+    # c = crawler.Crawler(DB)
     s = Searcher(DB)
     # c.create_index_tables()
     # c.crawl(webpages, pattern='https://www.refugee.info/serbia/')
     # c.crawl(webpages)
-    # print(s.query('police station belgrade'))
+    print(s.query(''))
