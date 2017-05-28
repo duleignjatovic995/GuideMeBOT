@@ -3,7 +3,8 @@ import sys
 import json
 import searchengine
 from nltk.stem import porter
-
+import crawler
+import neuralnet
 import requests
 from flask import Flask, request
 
@@ -156,6 +157,21 @@ def responder(message):
             urls.append(response[i][url_idx])
         resp_message += '\n'.join(urls)
         return resp_message
+
+
+# Pri inicijalizaciji postavka baze i crawlovanje
+def starter():
+    c = crawler.Crawler('searchindex.db')
+    try:
+        c.create_index_tables()
+    except Exception:
+        pass
+    nn = neuralnet.SearchNet('nn.db')
+    try:
+        nn.make_tables()
+    except Exception:
+        pass
+    c.crawl()
 
 
 if __name__ == '__main__':
