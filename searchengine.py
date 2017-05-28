@@ -2,26 +2,20 @@ import neuralnet
 import sqlite3.dbapi2 as sqlite
 from nltk.stem import porter
 import crawler
+
 import gensim
 
 DB = 'searchindex.db'
 RET_SIZE = 10
 default_page = 'http://www.unhcr.org/'
 
-webpages = [
-    'http://azil.rs/en/',
-    'http://www.unhcr.org/non-governmental-organizations.html',
-    'http://www.unhcr.org/pages/49c3646c296.html',
-    'https://www.refugee.info/serbia/',
-    'https://www.refugee.info/serbia/services/',
-]
 
-mynet = neuralnet.SearchNet('nn.db')
 RETURN_URL_LENGTH = 10
 
 
 class Searcher:
     def __init__(self, dbname):
+        self.mynet = neuralnet.SearchNet('nn.db')
         self.conn = sqlite.connect(dbname)
 
     def __del__(self):
@@ -218,24 +212,29 @@ class Searcher:
         """
         # Get unique URL IDs as an ordered list
         urlids = [urlid for urlid in set([row[0] for row in rows])]
-        nn_result = mynet.get_result(wordids, urlids)
+        nn_result = self.mynet.get_result(wordids, urlids)
         scores = dict([(urlids[i], nn_result[i]) for i in range(len(urlids))])
         return self.normalize(scores)
 
     def topic_score(self):
         pass
 
-    def urlname_score(self):
-        pass
+    def urlname_score(self, rows, wordids):
+        pass #urlnames = [self.get_url_name(rows) for row[0] in rows]
 
 
 if __name__ == '__main__':
+
     # krle = crawler.Crawler('bazulja.db')
     # krle.create_index_tables()
     # krle.crawl(webpages)
-    # c = crawler.Crawler(DB)
+    c = crawler.Crawler(DB)
+    try:
+        c.create_index_tables('searchindex.db')
+    except Exception:
+        print('Hendlovo sam ga baka nema frke uzivaj')
     s = Searcher(DB)
     # c.create_index_tables()
     # c.crawl(webpages, pattern='https://www.refugee.info/serbia/')
     # c.crawl(webpages)
-    print(s.query(''))
+    print(s.query('shelter'))

@@ -8,6 +8,14 @@ from gensim.summarization import summarize
 
 ignorewords = set(['the', 'of', 'to', 'and', 'a', 'in', 'is', 'it', 'for'])
 
+webpages = [
+    'http://azil.rs/en/',
+    'http://www.unhcr.org/non-governmental-organizations.html',
+    'http://www.unhcr.org/pages/49c3646c296.html',
+    'https://www.refugee.info/serbia/',
+    'https://www.refugee.info/serbia/services/',
+]
+
 
 class Crawler:
     # Initialize the crawler with the name of database
@@ -127,7 +135,7 @@ class Crawler:
                 return True
         return False
 
-    def crawl(self, pages, depth=2, pattern='http'):
+    def crawl(self, pages=webpages, depth=2, pattern='http'):
         """
         Starting with a list of pages do a breadth
         first search to the given depth, indexing pages as we go

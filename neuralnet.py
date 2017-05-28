@@ -1,6 +1,7 @@
 from math import tanh as sigmoid
 import sqlite3.dbapi2 as sqlite
 
+
 def d_tanh(y):
     """
     Calculates the derivative of tanh function.
@@ -268,8 +269,3 @@ class SearchNet:
             for k in range(len(self.urlids)):
                 self.set_strength(self.hidden_ids[j], self.urlids[k], 1, self.wo[j][k])
         self.conn.commit()
-
-
-if __name__ == "__main__":
-    srch = SearchNet('nn.db')
-    srch.make_tables()
